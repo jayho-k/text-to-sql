@@ -1,1 +1,4 @@
-.codex
+.codex/
+.cursor/
+.idea/
+.vscode/

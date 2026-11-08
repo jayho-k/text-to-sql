@@ -36,7 +36,12 @@
 29. [Term 이름 충돌·속성 식별과 실제 저장](05-semantic-compilation/chapter-04-1-term-and-attribute-writes.md): 이름과 소유·ID·5필드 key·설명/인증·transaction·부분 저장을 분석한다.
 30. [의미 embedding·후속 단계와 실패 경계](05-semantic-compilation/chapter-05-semantic-embedding-and-failure-boundaries.md): 실제 재조회·텍스트·metadata·inline/bulk·append·타입 누락·0벡터·후속 단계·복구 한계를 분석한다.
 31. [관계 종류·후보와 선언 FK 직접 연결](06-semantic-relationships/chapter-01-declared-and-semantic-foreign-keys.md): 소유/참조/관측 관계·미연결 조건·target 속성·자기 참조·DB 경계·중복·부분 실패·추론 인계를 분석한다.
-32. 의미 관계의 벡터 후보·값 검증·정리 → 이력 SQL·bridge → 검색 → SQL 생성·검증 → chat → 관리 기능·외부 인터페이스·예측 순으로 상세 분석한다.
+32. [벡터 후보·모델 선택과 표본 SQL 검사](06-semantic-relationships/chapter-02-vector-candidates-and-reference-validation.md): 두 검색·고유성 필터 전달·중복·ID 검증·동명 표본 검사·실제 timeout·저장 거부와 재시도 경계를 분석한다.
+33. [관계 정리·JOIN 기본 선택과 경로 소비](06-semantic-relationships/chapter-03-relationship-pruning-and-join-selection.md): 값 겹침·삭제/보존·그룹·모델/이름순 선택·transaction·PK 방향·BFS·검색/SQL 소비를 분석한다.
+34. [이력 SQL의 표현식 추출·속성 제안](06-semantic-relationships/chapter-04-query-history-sql-attributes.md): Term/SQL 범위·출력 제외·추출 범주·0점 순위·top 10·모델 지시·원문 매칭·실행별 중복 예약을 분석한다.
+35. [SQL 완성·검증·저장과 검색 반영](06-semantic-relationships/chapter-04-1-sql-construction-and-persistence.md): SELECT/JOIN 재구성·조건 손실·스키마·충돌·정적 검증 한계·원본 출처와 저장 SQL·부분 저장·임베딩·복구를 분석한다.
+36. [Bridge·junction 분류와 JOIN 패턴 속성](06-semantic-relationships/chapter-05-bridge-and-junction-sql-attributes.md): 구조 후보·payload 차이·flag 선저장·target Term·재정렬·모델 SQL·부분 실패·검색 필터 생략을 분석한다.
+37. 검색·후보 선택 → SQL 생성·검증 → chat → 관리 기능·외부 인터페이스·예측 순으로 상세 분석한다.
 
 설치·배포 안내는 제외한다. Snowflake·Trino·Kyuubi·HeavyDB 상세 분석은 사용자 요청으로 건너뛴다. 예정 Chapter 07~09는 제외하고 공통 실행 문서를 Chapter 10부터 이어간다. 각 기능은 파일·함수, 데이터 구조, 상태 변화, 실패·재시도, Mermaid와 관련 테스트까지 추적한다.
 
@@ -56,5 +61,7 @@
 - [표본·날짜·JSON 상세 계획](../../.codex/plan/auto-ontology/01-5-1_profiling-details.md)
 - [Term 추출·할당·저장 상세 계획](../../.codex/plan/auto-ontology/01-5-2_term-extraction-and-writes.md)
 - [의미 관계·SQL 속성·bridge 상세 계획](../../.codex/plan/auto-ontology/01-6_semantic-relationships.md)
+- [이력 SQL 속성 제안·완성·저장 상세 계획](../../.codex/plan/auto-ontology/01-6-1_query-history-sql-attributes.md)
+- [검색·후보 선택·SQL 문맥 상세 계획](../../.codex/plan/auto-ontology/01-7_retrieval.md)
 - 문서는 주제별 폴더에 chapter별로 작성하며, Mermaid 흐름도와 코드 근거를 포함한다.
 - 현재 문서는 정적 코드 분석 결과다. 실제 서비스 실행 결과와 구분한다.
