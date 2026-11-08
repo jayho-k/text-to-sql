@@ -1,0 +1,96 @@
+# SPDX-FileCopyrightText: Copyright (c) 2026, NVIDIA CORPORATION & AFFILIATES.
+# All rights reserved.
+# SPDX-License-Identifier: Apache-2.0
+
+# python
+.venv/
+**/__pycache__/
+
+# Build artefacts (e.g. auto-ontology-mcp wheels from `uv build`)
+dist/
+*.egg-info/
+
+
+# dependencies
+node_modules
+
+# pnpm
+.pnpm-store/
+
+# testing
+/coverage
+auto_ontology/tests/test_postgres_connector.py
+
+# misc
+.DS_Store
+*.pem
+*.p8
+*.pub
+
+# debug
+npm-debug.log*
+
+# local env files
+.env*.local
+.env
+
+# DuckDB database files
+*.duckdb
+*.duckdb.wal
+
+
+.env.docker
+
+
+# IDE config (keep launch.json tracked)
+.vscode/*
+!.vscode/launch.json
+
+# Cursor debug logs
+.cursor/
+.cursorignore
+
+# Cache
+.cache/
+
+# Evaluation tooling (local dev-only)
+dev_tools/evaluation/
+
+# Local OpenMetadata evaluation environment (Docker volume + rendered configs
+# with secrets); local scratch state, never commit.
+openmetadata-eval/
+
+# Claude Code's local agent-memory/session state — machine-specific, never commit.
+.claude/projects/
+dev_tools/pgadmin/
+
+# Generated SQLite fixture DBs — built from the vendored .sql by
+# dev_tools.fixtures.build_sqlite_fixtures; text is the source of truth, not the blob.
+dev_tools/fixtures/sql/*.sqlite
+
+# Local minikube deploy helper. Machine-specific by nature — it names one
+# checkout's paths and reads API keys from the environment — so it stays out of
+# the repo rather than shipping one developer's setup to everyone.
+helm.sh
+
+# Local, untracked working files (scratch notes, creds, deploy scripts, WIP)
+/COOKBOOK.MD
+/DATABRICKS_SSA_REPORT.md
+/databricks.txt
+/databricks_creds.txt
+/dev_tools/deploy_gsf_host.sh
+/dev_tools/deploy_gsf_k3s.sh
+/dev_tools/deploy_server.sh
+/dev_tools/deploy_to_dev_server.sh
+/dev_tools/generate_openapi_html.py
+/docs/blob-storage-plan.md
+/docs/profiling-catalog-qualification-fix.md
+/helm.sh.bak
+/index.html
+/kdc_ca1/
+/push.sh
+/snowflake_sso.txt
+/spider2_snowflake.txt
+/temp.txt
+/vectors_wiki.py
+/vectors_wiki_load.py
