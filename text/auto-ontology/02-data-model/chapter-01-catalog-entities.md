@@ -53,7 +53,7 @@ erDiagram
         text id PK
         text schema_id FK
         text name
-        text_array pk
+        text_array primary_key_columns "실제 필드명: pk"
         text table_type
     }
     CATALOG_COLUMN {

@@ -164,3 +164,125 @@
 | ETL | Extract·Transform·Load, 데이터를 추출·변환·적재하는 작업. 이 코드의 수집을 원본 전체 복제 ETL로 단정하지 않도록 비교할 때 쓴다. |
 
 기술 이름은 제공된 소스에서 사용하는 역할만 설명했다. 최신 버전 기능 비교는 이 문서의 범위가 아니다. [Python 의존성](../../../code/auto-ontology/pyproject.toml), [Frontend 의존성](../../../code/auto-ontology/frontend/package.json), [제품 설명](../../../code/auto-ontology/README.md)
+
+## 8. 검색 준비 단계의 기준점과 연결 복원
+
+| 용어 | 쉬운 뜻과 예시 | 코드에서 구분할 경계 |
+| --- | --- | --- |
+| Anchor / anchor table | 질문의 기준 의미 속성 / 그 속성을 소유한 테이블. 고객 이름 속성이 기준이면 고객 테이블이 anchor table이다. | `_identify_anchor`는 속성 ID를 고른다. 테이블 자체를 속성 ID처럼 선택하는 것이 아니다. |
+| Value anchor | 질문 표현이 저장 값과 일치한 위치의 단서. `human → race.race = Human` 같은 정보다. | 기준 의미 속성과 별도 구조다. 테이블 후보를 제안하지만 최종 필터 잔존·값 조건의 타당성을 보장하지 않는다. |
+| Hub / sibling | 여러 테이블이 참조하는 중심 테이블 / 같은 중심을 참조하는 다른 테이블. orders와 invoices가 customers를 참조하는 경우다. | 발견 목록은 테이블 정보이며 실제 JOIN 컬럼 목록과 다르다. |
+| Relevant tables | SQL 생성 모델에게 보여 주는 테이블·컬럼 문맥 | 최종 SQL이 모두 사용해야 하는 강제 목록은 아니다. 필터 뒤 연결 구조를 보충할 수 있다. |
+| Pre-filter candidate IDs | 모델 관련성 필터 직전에 보관한 후보 테이블 ID 집합 | 두 테이블 사이 bridge 복원 범위를 제한한다. 이후 발견할 junction 전체를 미리 포함한 집합은 아니다. |
+| Junction 확장 / bridge 복원 | 표시된 연결 테이블을 한 단계 새로 발견 / 원래 후보였던 경로의 중간 테이블을 되살림 | Junction은 `is_junction_table` 조건을 따르고, bridge는 중간 경로라는 역할을 따른다. 둘이 같은 분류일 필요는 없다. |
+| Forced table | 모델 필터 뒤 코드가 추가하려는 테이블 | ID를 모은 뒤 catalog 재조회가 성공해야 실제 문맥에 들어온다. |
+| Row scoping | 어떤 행이 답변 대상인지 제한하는 효과. 검사 기록과 연결되는 환자만 남기는 JOIN 등이다. | 출력 컬럼이 없어도 관련 테이블이 필요할 수 있다. 관련성 모델은 제거가 이 행 집합을 바꾸지 않는지도 보고해야 한다. |
+| Metadata backfill | 빈 컬럼 정보를 catalog로 다시 읽어 채움 | 샘플·NULL 허용 여부·의미 FK 키 존재를 검사한다. 기존의 비어 있지 않은 값을 항상 최신 값으로 교체하는 것은 아니다. |
+
+상세 호출·입출력·예시는 [기준 속성·경로](../07-retrieval/chapter-05-anchor-and-semantic-context.md), [hub 확장](../07-retrieval/chapter-05-1-hub-sibling-expansion.md), [테이블 선택·복원](../07-retrieval/chapter-06-table-selection-and-context-reconciliation.md)에 있다. 근거: [준비 agent](../../../code/auto-ontology/auto_ontology/retrieval/text_to_sql/agents/candidates_preparation.py), [관계 조회](../../../code/auto-ontology/auto_ontology/dal/attributes.py), [값 단서](../../../code/auto-ontology/auto_ontology/retrieval/text_to_sql/value_anchors.py).
+
+## 9. SQL 생성의 요청·상태·실행 계약
+
+| 용어 | 쉬운 뜻과 예시 | 코드에서 구분할 경계 |
+| --- | --- | --- |
+| Payload / TextToSQLPayload | 호출자가 보내는 요청 / 이 생성 경로의 요청 타입 | 타입상 생략 가능한 connectors도 실제 빌더는 비어 있으면 거부한다. |
+| AgentState / path_state | 단계들이 공유하는 데이터 / 그 안의 중간 결과 사전 | 모델·검색기는 최상위에, 질문 종류·테이블·SQL 등은 주로 path_state에 있다. |
+| TypedDict / NotRequired | 사전 키·타입의 선언 / 키 생략 가능 표시 | 실행 중 모든 값을 검사하거나 기본값을 채우는 기능과 다르다. |
+| Node / edge / routing | 실행 단계 / 단계 연결 / 다음 단계 선택 | 분기마다 question_type·evidence·decision 등 서로 다른 상태를 읽는다. |
+| Wrapper / failure_decision | 처리 함수를 감싼 공통 실행 코드 / 해당 agent의 실패 시 분기 값 | 입력 거부·잘못된 반환 타입·일반 실행 예외가 같은 방식으로 처리되지 않는다. |
+| Shallow copy / snapshot | 바깥 컨테이너만 복사 / 특정 시점 자료 보관 | 내부 사전은 공유될 수 있다. RetryRestoreState라는 이름이 내부 객체의 변경 불가를 보장하지 않는다. |
+| Resume / full pipeline retry | 중간 상태로 지정 지점부터 재개 / 원요청 경계로 돌아가 전체 재시도 | entry 분기표는 question_intent·reconstruct_sql 두 시작 값만 갖는다. |
+| Node start event / node update | 노드가 시작했다는 알림 / 노드가 반환한 상태 갱신 | 시작 알림을 완료·성공으로 해석하지 않는다. |
+
+상세 예시·실패 표는 [SQL 생성 Chapter 01](../08-sql-generation/chapter-01-request-state-and-graph-contract.md)에 있다. 근거: [상태 타입](../../../code/auto-ontology/auto_ontology/retrieval/text_to_sql/state.py), [상태 빌더](../../../code/auto-ontology/auto_ontology/retrieval/text_to_sql/main.py), [공통 래퍼](../../../code/auto-ontology/auto_ontology/retrieval/text_to_sql/base.py), [그래프](../../../code/auto-ontology/auto_ontology/retrieval/text_to_sql/text_to_sql_graph.py).
+
+## 10. 의도 분류와 정보 응답의 반복
+
+| 용어 | 쉬운 뜻과 예시 | 코드에서 구분할 경계 |
+| --- | --- | --- |
+| Information / prediction / calculation | 정의 설명 / 알 수 없는 결과 예측 / 저장 데이터 조회·계산 | “매출의 정의”와 “올해 매출 계산”을 다른 경로로 분류한다. 정보 응답도 후보 검색은 거친다. |
+| Calculation subtype | 계산 요청의 하위 종류. 순위·비교·개수·집계·산술 등 아홉 개다. | subtype별 SQL template는 고정 예문이며 실행 SQL이 아니다. |
+| Inline evidence | 질문 문장 안에 섞인 공식·해석 지시. “매출은 판매액에서 환불액을 뺀 값” 등이다. | 추출 문자열과 기존 최상위 evidence를 구분하며 부분 문자열 기준으로 중복을 줄인다. |
+| Calculation-only / prediction override | 계산임을 전제한 요청 / 예측 강제·금지 설정 | 계산 전용이 우선하며 재작성·근거 분리·예시 선별 호출은 계속한다. |
+| Action / observation | 다음 조회 또는 답변 선택 / 실행한 도구 결과 | InformationAgent는 매회 구조화된 행동을 받고 누적 관찰을 다음 프롬프트에 다시 넣는다. |
+| Iteration / tool-call budget | 모델 판단 반복 1회 / 실제 새 도구 호출 한도 | 기본 8회 판단·6회 호출이다. 중복 호출은 도구 수를 늘리지 않지만 판단 횟수는 소모한다. |
+| Call signature | 도구 이름과 인수를 키 정렬 JSON으로 만든 중복 비교 문자열 | 의미가 비슷하다는 판단이 아니라 구조가 같은 호출인지 비교한다. 실패한 호출도 서명에 남는다. |
+| Source IDs / linked column IDs | 답변 근거라고 선택한 객체 ID / 그중 도구 결과에서 컬럼으로 수집한 ID | 알려진 ID와의 교집합은 답변의 모든 문장을 사실 검증하는 기능과 다르다. |
+
+호출·상태·실패와 예시는 [의도 분류](../08-sql-generation/chapter-02-intent-and-information-routing.md), [정보 응답 반복](../08-sql-generation/chapter-02-1-information-agent-loop.md)에 있다. 근거: [QuestionIntentAgent](../../../code/auto-ontology/auto_ontology/retrieval/text_to_sql/agents/question_intent.py), [InformationAgent](../../../code/auto-ontology/auto_ontology/retrieval/text_to_sql/agents/information_agent.py), [도구 등록·디스패치](../../../code/auto-ontology/auto_ontology/retrieval/text_to_sql/agents/information_tools.py).
+
+## 11. 정보 조회의 페이지·범위·표시 제한
+
+| 용어 | 쉬운 뜻과 예시 | 코드에서 구분할 경계 |
+| --- | --- | --- |
+| Dataset / schema / parent ID | 등록 DB 객체 / 테이블 이름 공간 / 상위 객체 식별자 | 정보 도구의 dataset은 DB다. 스키마 ID 목록 조회는 database_name을 받아도 실제 DAL에서 무시한다. |
+| Pagination / skip / limit | 구간별 조회 / 건너뛸 수 / 읽거나 반환할 수 | 컬럼은 페이지를 지원하지만 모든 목록 도구가 skip을 적용하지는 않는다. |
+| Sentinel row | 초과 여부를 확인하려고 하나 더 읽는 행 | 컬럼·속성 100개 제한에서 101개를 요청한다. 속성 검색은 그 101개 안에서만 ID/이름을 찾을 수 있다. |
+| Truncated | 일부 결과가 생략됐다는 응답 표시 | 전체 중첩 목록·SQL 길이·실제 DB 조회량까지 제한했다는 뜻은 아니다. 도구마다 판단 필드가 다르다. |
+| ID resolution / name resolution | 식별자로 직접 읽기 / 이름에서 대상을 찾기 | ID 경로가 함께 준 DB 이름까지 재검증하지는 않는다. 이름 대소문자·모호성 규칙도 도구마다 다르다. |
+| Zone scoping | 접근할 catalog 객체 범위를 zone_ids로 제한하는 처리 | DAL의 None은 범위 제한 없음이고 빈 목록은 허용 범위 없음이다. 정보 도구가 이 인수를 전달하는지 따로 봐야 한다. |
+| Connected tables / semantic FK | 저장 table__join 이웃 / 컬럼의 의미 참조 관계 | 정보 표시의 이웃·의미 연결과 실제 SQL 경로에 선택된 관계는 같은 목록이 아니다. |
+
+도구별 입력·반환·실패·DAL·테스트는 [정보 조회 Chapter 02-2](../08-sql-generation/chapter-02-2-information-tools-and-catalog-access.md)에 있다. 근거: [도구](../../../code/auto-ontology/auto_ontology/retrieval/text_to_sql/agents/information_tools.py), [구조 DAL](../../../code/auto-ontology/auto_ontology/dal/datasources.py), [범위 해석](../../../code/auto-ontology/auto_ontology/dal/users.py), [의미 상세](../../../code/auto-ontology/auto_ontology/dal/exploration.py).
+
+## 12. 근거의 필드 연결과 값 보정
+
+| 용어 | 쉬운 뜻과 예시 | 코드에서 구분할 경계 |
+| --- | --- | --- |
+| Schema grounding | 업무 표현을 실제 컬럼·조건으로 연결. “유료 계정”을 인용한 계정 flag 조건으로 바꾸는 등이다. | 모델의 전체 질문·근거 제안을 수용한다. 검사 함수는 모든 수식·문장의 보존을 증명하지 않는다. |
+| Physical reference / quoting | 실제 컬럼의 한정 이름 / 이름을 인용해 한 항목으로 표현 | connector·방언으로 만든 정확한 문자열이 검사 기준이다. |
+| Grounded evidence / refined evidence | 필드를 연결한 근거 / 그 뒤 값·연산자를 보정한 근거 | 2차 실패가 1차 연결까지 사용자 원문으로 되돌리는 것은 아니다. |
+| Scalar / literal / predicate operator | 단일 값 / 직접 적은 값 / 비교 연산자 | 100·Active와 >= 같은 값을 보정한다. 수식 전체를 SQL 문법으로 검증하는 단계는 아니다. |
+| Full-line repair / atomic application | 전체 행 교체 / 수정 묶음 전부 수용 또는 전부 거부 | 2차 입력 행에 대해 적용하며 원래 줄바꿈을 붙인다. DB 트랜잭션과는 다르다. |
+| Value support | 값 단서·샘플·질문에서 수정값을 찾는 조건 | 단서 성공 때 샘플은 생략하지만 단서 불일치 뒤 샘플은 허용한다. 원본 DB를 재조회하지 않는다. |
+| SequenceMatcher / changed span | 문자열 차이를 나누는 도우미 / 달라진 구간 | 최대 세 구간·문자 수·첫 비교식의 좌우를 검사하는 규칙이다. 의미 동등성 증명이 아니다. |
+| Corrected question | 값 보정 모델이 함께 제안한 전체 질문 | 수용된 행이 있고 알려진 물리 필드 집합이 같으면 수용할 수 있다. 각 값이 정확히 같은 방식으로 바뀌었는지 대조하지는 않는다. |
+
+호출·검사·실패·예시는 [필드 연결과 조율](../08-sql-generation/chapter-03-evidence-refinement.md), [행·값·질문 보정](../08-sql-generation/chapter-03-1-evidence-value-and-operator-repairs.md)에 있다. 근거: [보정 agent와 검사 함수](../../../code/auto-ontology/auto_ontology/retrieval/text_to_sql/agents/evidence_refinement.py), [이름 인용](../../../code/auto-ontology/auto_ontology/utils/sql_identifiers.py), [저장 샘플 변환](../../../code/auto-ontology/auto_ontology/utils/sample_values.py), [SQL 생성에서의 근거 지시](../../../code/auto-ontology/auto_ontology/retrieval/text_to_sql/prompts.py).
+
+## 13. SQL 후보·출력 모델과 생성 문맥
+
+| 용어 | 쉬운 뜻과 예시 | 코드에서 구분할 경계 |
+| --- | --- | --- |
+| SQL candidate / constructable | 아직 검사 전인 SQL / 다음 검사로 넘길 수 있는 생성 결과 | 실행 성공·정확성 보장과 다르다. 결과 객체는 후속 검증 노드가 읽는다. |
+| SQLGenerationModel | thought·sql_code·response 세 필드의 응답 계약 | SQL 필수·공백/점 대체 거부·추가 필드 금지다. 남은 텍스트 전용 호환 분기와 구분한다. |
+| Thought / response | 짧은 방법·가정 요약 / 사용자용 설명 | SQL 성공 반환에 자연어 답변을 AIMessage로 즉시 붙이지 않는다. 비공개 내부 추론 전체를 요구하는 계약이 아니다. |
+| Generation retry / reconstruction | 모델 응답 재시도 / 실패 SQL을 검사 결과로 고쳐 생성 | 기본 생성은 바깥 3회와 내부 최대 3회가 겹칠 수 있다. 전체 파이프라인 재시도와 별개다. |
+| SQL template / reference query pattern | 계산 유형 예문 / 다른 질문·DB의 구조 참고 | 현재 DB의 저장 분석 SQL과 다르며 외부 이름·상수를 그대로 가져오지 말라고 지시한다. |
+| Projection / row grain | 반환 컬럼 선택 / 결과 한 행의 의미 | shorten_answer는 단순한 문장 길이 설정보다 넓은 SQL 출력 규칙을 바꾼다. |
+| Important columns / semantic hint | 의미가 맞은 컬럼 강조 / 기준 테이블·경로 안내 | 최종 스키마·구조 경로와 표시 조건이 다르다. 일부 필드의 대체 표시는 실제 존재 검증이 아니다. |
+| Prompt precedence | 여러 자료가 충돌할 때 모델에게 준 우선순위 | 근거·현재 스키마와 질문이 참고 예시보다 우선하도록 지시한다. 코드가 생성 SQL의 모든 규칙을 강제한 것은 아니다. |
+
+상세 호출·실패·반환은 [생성 조율](../08-sql-generation/chapter-04-sql-prompt-and-output.md), 입력 예시·문맥 구분은 [포맷터·규칙](../08-sql-generation/chapter-04-1-sql-context-and-prompt-rules.md)에 있다. 근거: [기본 생성 agent](../../../code/auto-ontology/auto_ontology/retrieval/text_to_sql/agents/sql_from_semantic.py), [응답 모델](../../../code/auto-ontology/auto_ontology/retrieval/text_to_sql/models.py), [프롬프트](../../../code/auto-ontology/auto_ontology/retrieval/text_to_sql/prompts.py), [포맷터](../../../code/auto-ontology/auto_ontology/retrieval/text_to_sql/formatters_util.py).
+
+## 14. 대상 DB·방언·이름 표기의 계약
+
+| 용어 | 쉬운 뜻과 예시 | 코드에서 구분할 경계 |
+|---|---|---|
+| Canonical database name | 설정에 등록된 DB 표기. 요청 SALES를 sales로 돌려주는 등이다. | 명시 요청은 정확 일치 우선·유일한 casefold 일치다. 테이블 기반 연결 선택은 대소문자를 보정하지 않는다. |
+| Connector routing | 관련 테이블의 DB 이름으로 사용할 연결 객체 선택 | target_db 인수나 SQL 파싱 없이 선택한다. 일부 누락은 건너뛰고 중복 연결 이름은 마지막 객체가 남는다. |
+| Dialect / SQLGlot | DB별 SQL 문법 / SQL 분석·변환 라이브러리 | 연결의 dialect를 직접 전달한다. 전체 연결의 검증 방언 목록과 선택 연결의 실행 방언을 구분한다. |
+| Catalog / schema namespace | 테이블을 구분하는 상위 이름 공간 | Databricks의 database_name은 catalog다. 프로젝트의 메타데이터 저장소인 catalog와 구분한다. |
+| Qualified / quoted identifier | 상위 이름을 붙인 식별자 / 따옴표로 경계를 표시한 식별자 | connector.qualify는 조회용 인용 이름, qualify_table은 인용 없는 표시 문자열이다. 생성 지시까지 동일한 계약은 아니다. |
+| Bare table name | schema·DB를 붙이지 않은 이름. orders 등이다. | SQLite·DuckDB 시스템 지시는 이를 요구하지만 표시 포맷터는 해당 방언에서 접두어를 무조건 제거하지 않는다. |
+| Mixed-case identifier repair | 알려진 대문자 포함 이름에 인용을 추가하는 처리 | 정확한 철자만 수용하며 잘못된 대소문자나 모든 catalog/schema 접두어를 고치는 기능이 아니다. |
+| Dialect sanitization | 실행 전 방언에 따라 문자열을 정리하는 처리 | 현재 실행 helper의 SQLite PUBLIC 접두어 정규식 제거는 일반 SQL 구조 변환과 다르다. |
+
+예시·상태·실패·테스트 한계는 [SQL 생성 Chapter 05](../08-sql-generation/chapter-05-database-and-dialect-routing.md)에 있다. 근거: [라우팅](../../../code/auto-ontology/auto_ontology/retrieval/text_to_sql/connector_routing.py), [연결 인터페이스](../../../code/auto-ontology/auto_ontology/connectors/base.py), [표시 포맷터](../../../code/auto-ontology/auto_ontology/retrieval/text_to_sql/formatters_util.py), [시스템 지시](../../../code/auto-ontology/auto_ontology/retrieval/text_to_sql/prompts.py), [실행](../../../code/auto-ontology/auto_ontology/retrieval/text_to_sql/agents/sql_execution.py).
+
+## 15. 전체 재시도·재개와 SQL 이벤트의 수명
+
+| 용어 | 쉬운 뜻과 예시 | 코드에서 구분할 경계 |
+|---|---|---|
+| Full-pipeline attempt | 질문 의도부터 답변까지 한 번의 처리 | 지정 실패 노드·빈 답변 SQL·복원값·시도 수 조건으로 최대 두 전체 시도다. 모델 호출 횟수와 다르다. |
+| Retry snapshot / shallow copy | 복원용 요청 묶음 / 바깥 사전·목록 복사 | immutable 주석과 중첩 객체의 실제 독립성을 구분한다. 원래 입력 경로에 명시 삭제 목록을 적용한다. |
+| Resume seed / entry router | 중간 시작에 필요한 기존 상태 / 시작 노드 선택 | _resume_from으로 새 graph의 시작점을 고른다. 실행 checkpoint 복구가 아니다. coordinator가 사용 후 키를 제거한다. |
+| Prior-round history / current budget | 이전 차례 참고 이력 / 현재 수정 횟수 | debug seed는 prior_round_failed_attempts와 failed_attempts를 분리해 새 한도를 확보한다. |
+| Deterministic SQL fallback | 의도 검사에서 거부됐던 마지막 SQL을 대체 반환 | 반환 함수가 재검증·재실행하지 않는다. SQL과 저장 결과/설명이 같은 시점이라는 보장도 없다. |
+| Recursion limit | graph 진행 단계의 상한 | 45는 실행 시간·모델 호출 수·SQL 재구성 횟수와 같은 단위가 아니다. |
+| Step start / end | 단계 시작 / 완료 알림 | 시작은 custom 통로, 완료는 updates 통로에서 만든다. 예외 때 완료가 없을 수 있다. |
+| SQL event / last_sql | 실행 직전 검사를 통과한 SQL 알림 / 호출자가 기억한 마지막 알림 SQL | 실행 성공 증거가 아니다. 최종 답변이 비어도 실패 기록용 SQL로 저장할 수 있다. |
+| Partial answer / AgentRunError | 실패 이전 SQL·설명 일부 / 그 값을 가진 오류 타입 | 스트리밍 오류·비스트리밍 예외와 상태 반환 함수의 오류 사전은 다른 계약이다. |
+| Buffer replay / graph resume | 이미 전송한 이벤트 다시 읽기 / 중간 노드부터 실행 시작 | 전송 재접속이 모델·DB 작업을 다시 시작한다는 뜻은 아니다. |
+
+호출·삭제/보존·한도·재개 예시는 [Chapter 06](../08-sql-generation/chapter-06-full-retry-and-resume.md), 이벤트·부분 답변·저장 경계는 [Chapter 06-1](../08-sql-generation/chapter-06-1-streaming-and-caller-boundaries.md)에 있다. 근거: [실행 루프](../../../code/auto-ontology/auto_ontology/retrieval/text_to_sql/main.py), [그래프](../../../code/auto-ontology/auto_ontology/retrieval/text_to_sql/text_to_sql_graph.py), [대화형 coordinator](../../../code/auto-ontology/auto_ontology/retrieval/interactive/coordinator.py), [chat router](../../../code/auto-ontology/auto_ontology/server/chat/router.py).

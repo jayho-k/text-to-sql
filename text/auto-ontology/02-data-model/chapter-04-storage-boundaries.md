@@ -108,6 +108,38 @@ flowchart TD
 
 블록 안에서 예외가 나 바깥으로 전파되면 rollback하고, 정상 종료하면 commit한다. `finally`에서 이전 ContextVar 값으로 복원하므로 이후 요청이 이미 끝난 transaction을 붙잡지 않게 한다.
 
+예를 들어 **‘월별 매출’ 분석 정보 저장(A)과 해당 분석의 SQL 연결 저장(B)을 하나로 묶는다**고 하자. 아래는 transaction 동작을 설명하는 가상 흐름이며, 특정 service 전체가 이렇게 묶인다는 뜻은 아니다.
+
+1. **Enter → Active → Begin**: `write_transaction()`에 들어간다. 진행 중인 DAL transaction이 없으면 pool에서 연결 하나를 빌리고 transaction을 시작한다.
+2. **Set**: `_active` ContextVar에 ‘현재 실행 흐름에서 사용할 연결’을 담은 `StoreConn` 객체를 기록한다. 예를 들어 연결 7번을 담아 두면, 같은 실행 문맥의 `store()` 호출은 그 객체를 반환한다. 7번은 설명용 번호다.
+3. **Body**: A와 B를 각각 `store().query_write(...)`로 실행한다. 둘 다 연결 7번을 사용하며, A 실행 직후에는 아직 commit하지 않는다.
+4. **Exit → Commit 또는 Rollback**: A·B가 모두 성공해 블록을 정상 종료하면 둘 다 확정한다. B에서 오류가 나 예외가 블록 밖으로 나가면, 먼저 실행한 A도 함께 취소한다.
+5. **Reset → Return**: 성공·실패 어느 쪽이든 `_active`를 이전 값으로 돌린다. 처음에 활성 transaction이 없었다면 다시 ‘없음’이 되고, 연결은 pool로 반환된다.
+
+| 예시 분기 | 저장 결과 |
+| --- | --- |
+| A 성공 → B 성공 → 블록 정상 종료 | 분석 정보와 SQL 연결을 함께 commit |
+| A 성공 → B 실패 → 예외가 블록 밖으로 전파 | A도 rollback되어 분석 정보만 남는 상황을 방지 |
+| A를 처리하는 내부 함수가 다시 `write_transaction()` 호출 | `Active → Reuse`로 가서 연결 7번을 그대로 사용. 내부 블록 종료 시 따로 commit하지 않고 바깥 블록의 종료를 기다림 |
+
+#### Set 단계: 연결을 함수마다 전달하지 않아도 되는 이유
+
+`ContextVar`는 현재 실행 문맥에서 사용할 값을 보관하는 Python 도구다. 여기의 `_active`에는 **‘연결 7번이 사용 중’이라는 상태 표시만 저장하는 것이 아니라, 실제 연결 객체를 감싼 `StoreConn`을 저장한다.** 그래서 `store()`가 그 객체를 반환하고 DB 작업은 그 안의 연결을 사용할 수 있다.
+
+아래 함수명은 설명용이다. 두 함수 모두 내부에서 `store().query_write(...)`를 호출한다고 가정한다.
+
+```python
+with write_transaction():
+    save_analysis()  # store() → 연결 7번을 담은 StoreConn
+    save_sql_link()  # store() → 위와 동일한 StoreConn
+```
+
+`write_transaction()`이 먼저 `_active`에 `StoreConn`을 넣고, 두 함수의 `store()`가 각각 `_active`를 읽는다. 따라서 함수마다 연결을 인자로 넘기지 않아도 **같은 연결·같은 transaction으로 두 작업을 실행**한다.
+
+여기서 ‘같은 실행 문맥’은 위 블록에서 이어지는 동기 함수 호출 흐름으로 이해하면 된다. 별도 스레드 작업까지 자동으로 이 연결을 공유한다는 뜻은 아니다.
+
+즉, **ContextVar는 현재 transaction의 연결을 찾게 해 주고, commit·rollback은 그 연결에서 실행한 변경을 함께 확정·취소한다.** 별도 연결로 쓰는 vector 저장까지 자동으로 묶이지는 않는다.
+
 ### 4.3 중첩은 별도 transaction도 savepoint도 아니다
 
 활성 transaction이 있으면 중첩 `write_transaction()`은 그냥 yield한 뒤 반환한다. 따라서 안쪽 함수가 끝났어도 안쪽 변경만 먼저 commit되지 않는다. 반대로 안쪽에서 발생한 Python 예외를 바깥 transaction 내부에서 잡아 버리면, 안쪽 scope 자체가 자동 rollback해 주는 구조도 아니다.

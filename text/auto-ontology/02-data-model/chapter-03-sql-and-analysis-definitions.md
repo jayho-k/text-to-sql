@@ -34,6 +34,19 @@
 | `sql_attribute` | 이름·설명·expression·source·certified 등 | Term과 SQL 객체 연결. 세부 필드는 앞 chapter 참조 |
 | `pql_analysis` | 이름·설명·PQL 문자열·외부 ID | 확인한 schema에는 SQL·Term·DB 연결 테이블 없음 |
 
+### 사용 상황을 짧은 예시로 보면
+
+아래는 용도를 설명하기 위한 가상 예시다.
+
+| 객체 | 어떤 상황에서 어떻게 쓰는가 |
+| --- | --- |
+| `sql_query` | DB 이력에서 `SELECT SUM(amount) FROM orders`를 수집하면 본문과 `orders` 참조를 저장한다. 나중에 주문 관련 SQL을 모아 재사용할 계산식 후보를 찾는 데 쓴다. |
+| `CustomAnalysis` | 사람이 ‘월별 매출 분석’이라는 이름으로 SQL을 등록한다. 사용자가 ‘지난해 월별 매출’을 물으면 관련 분석을 검색해 새 SQL을 만들 때 참고한다. |
+| `SqlAttribute` | ‘주문’에 ‘순매출 = 결제액 - 환불액’이라는 SQL 정의를 연결한다. 사용자가 ‘지역별 순매출’을 물으면 모델이 그 계산 기준을 참고해 SQL을 만든다. |
+| `PqlAnalysis` | ‘다음 달 구매할 고객’이라는 질문과 PQL을 예시로 등록한다. 비슷한 예측 질문이 들어오면 해당 질문·PQL 쌍을 모델에 보여줘 새 PQL을 만들 때 참고한다. |
+
+근거: [이력 SQL에서 속성 제안](../../../code/auto-ontology/auto_ontology/semantic/sql_attribute_suggester.py), [SQL 생성에 분석·속성 전달](../../../code/auto-ontology/auto_ontology/retrieval/text_to_sql/agents/sql_from_semantic.py), [예측 예시 검색](../../../code/auto-ontology/auto_ontology/retrieval/kumo/rag.py)
+
 CustomAnalysis에는 `sql` 문자열 필드가 없다. API에서 SQL을 받더라도 SQL 본문은 `sql_query`에 저장하고 연결을 만든다. 반면 PqlAnalysis는 `pql` 필드에 본문을 직접 저장한다.
 
 CustomAnalysis와 PqlAnalysis에는 schema상 `certified` 필드가 없다. 예측 코드의 ‘verified examples’라는 명칭만으로 별도의 인증 상태 검사가 있다고 해석하면 안 된다.
@@ -225,7 +238,7 @@ Bridge table은 다른 대상들을 연결하는 중간 테이블이다. 자동 
 
 ## 10. PqlAnalysis는 예측용 질문·쿼리 쌍이다
 
-PQL은 예측 경로가 사용하는 질의 언어다. `create_pql_analysis()`는 name·pql 중복을 service에서 검사하고 새 ID를 발급해 본문을 저장한다. 일반 분석의 `validate_sql()` 단계는 없다. 저장 service 설명상 PQL의 테이블 해석은 예측 시점의 graph에서 수행한다.
+PQL은 Predictive Query Language(예측용 질의 언어)로, 이 프로젝트에서는 Kumo 예측 엔진에 무엇을 예측할지 전달한다. SQL로 ‘지난달 주문 건수’를 조회한다면, PQL로는 ‘앞으로 30일 내 주문 발생 가능성’을 예측한다. `create_pql_analysis()`는 name·pql 중복을 service에서 검사하고 새 ID를 발급해 본문을 저장한다. 일반 분석의 `validate_sql()` 단계는 없다. 저장 service 설명상 PQL의 테이블 해석은 예측 시점의 graph에서 수행한다.
 
 Embedding은 **name과 description**만 사용하고 PQL 본문은 포함하지 않는다. 질문과 비슷한 질문을 검색하고, 매칭된 ID로 PQL을 다시 읽는 구조다.
 
@@ -244,11 +257,27 @@ sequenceDiagram
     R->>P: question query reasoning 예시
 ```
 
+예를 들어 **‘앞으로 30일 안에 구매할 고객은?’**이라는 새 질문이 들어왔다고 하자. 아래는 실제 저장값이 아닌 설명용 예시다.
+
+1. `Q → R`: 새 질문을 `fetch_pql_examples()`에 전달한다.
+2. `R → V → R`: 비슷한 질문을 검색해, 미리 등록된 **‘앞으로 7일 안에 구매할 고객은?’** 예시의 ID를 얻는다.
+3. `R → D → R`: 그 ID로 이름·설명·PQL 본문을 읽는다. DAL(Data Access Layer)은 저장소를 읽고 쓰는 코드 계층이다.
+4. `R → P`: 아래 질문·설명·PQL을 참고 예시로 프롬프트에 넣는다.
+
+```text
+question: 앞으로 7일 안에 구매할 고객은?
+reasoning: 고객별로 향후 7일 내 주문 발생 여부를 예측한다.
+query: PREDICT COUNT(orders.*, 0, 7, days) > 0
+       FOR EACH customers.customer_id
+```
+
+이 PQL은 ‘고객마다 향후 7일 동안 주문이 한 번 이상 발생할 가능성’을 예측하라는 뜻이다. 이후 모델은 이 예시를 참고해 새 질문의 기간인 `30`을 사용한 PQL을 만들 수 있다. **위 다이어그램은 참고 예시 전달까지이며, 새 PQL 생성과 실제 예측 실행은 다음 단계다.**
+
 `fetch_pql_examples()`는 name을 질문, description을 추론 설명, pql을 query로 구성하고 검색 순서를 유지한다. 검색·조회 실패는 빈 예시로 내려가 예측 자체를 계속할 수 있다.
 
 이 검색에는 DB명 필터 인자가 전달되지 않는다. PqlAnalysis도 DB 연결이 없으므로 DB 범위를 지정한 semantic reset이 이를 자동으로 포함하지 않는다는 schema 주석과 일치한다. 전역 reset과 특정 DB reset을 구분해야 한다.
 
-근거: [PQL service](../../../code/auto-ontology/auto_ontology/server/pql_analyses/service.py), [PQL 저장·embedding 문서](../../../code/auto-ontology/auto_ontology/dal/pql_analyses.py), [few-shot 검색](../../../code/auto-ontology/auto_ontology/retrieval/kumo/rag.py), [schema](../../../code/auto-ontology/auto_ontology/dal/schema.py)
+근거: [PQL service](../../../code/auto-ontology/auto_ontology/server/pql_analyses/service.py), [PQL 저장·embedding 문서](../../../code/auto-ontology/auto_ontology/dal/pql_analyses.py), [few-shot 검색](../../../code/auto-ontology/auto_ontology/retrieval/kumo/rag.py), [PQL 문법·예시](../../../code/auto-ontology/auto_ontology/retrieval/kumo/prompts.py), [schema](../../../code/auto-ontology/auto_ontology/dal/schema.py)
 
 ## 11. 삭제·수정에서 공유 SQL을 주의해야 한다
 
