@@ -1,0 +1,12 @@
+{"id":"arithmetic-01","question":"I have 5 apples and receive 2 more. How many apples do I have?","answer":"7","kind":"number"}
+{"id":"letters-01","question":"Concatenate the last letter of each word, in order: think, machine, learning. Return lowercase letters only as the answer.","answer":"keg","kind":"text"}
+{"id":"condition-01","question":"There are 12 red balls and 8 blue balls. Remove 3 red balls and no blue balls. How many blue balls remain?","answer":"8","kind":"number"}
+{"id":"arithmetic-02","question":"A shop has 4 boxes with 6 pens each and sells 7 pens. How many pens remain?","answer":"17","kind":"number"}
+{"id":"arithmetic-03","question":"A ticket costs 12 dollars. What is the total cost in dollars for 3 tickets after a 6 dollar discount on the total?","answer":"30","kind":"number"}
+{"id":"arithmetic-04","question":"What is 25 percent of 80?","answer":"20","kind":"number"}
+{"id":"arithmetic-05","question":"A train covers 90 kilometers in 1.5 hours. What is its average speed in kilometers per hour?","answer":"60","kind":"number"}
+{"id":"letters-02","question":"Concatenate the first letter of each word, in order: plan, solve, verify. Return lowercase letters only as the answer.","answer":"psv","kind":"text"}
+{"id":"condition-02","question":"Of 20 students, 7 do not play chess. How many play chess?","answer":"13","kind":"number"}
+{"id":"condition-03","question":"A jar has 9 green and 4 yellow beads. Add 6 yellow beads. How many green beads are now in the jar?","answer":"9","kind":"number"}
+{"id":"condition-04","question":"A meeting starts at 09:40 and lasts 35 minutes. Return its ending time in 24-hour HH:MM format.","answer":"10:15","kind":"text"}
+{"id":"condition-05","question":"Alice has 14 coins. Bob has 5 fewer coins than Alice. Carol has twice as many as Bob. How many coins does Carol have?","answer":"18","kind":"number"}

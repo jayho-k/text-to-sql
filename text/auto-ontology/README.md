@@ -59,7 +59,22 @@
 52. [대상 DB·방언과 테이블 이름의 계약](08-sql-generation/chapter-05-database-and-dialect-routing.md): 요청 정규화·테이블 기반 연결 선택·중복/누락·6개 엔진 인터페이스·표시/인용/지시 차이·후속 선택과 실패를 분석한다.
 53. [전체 재시도·재개와 생성 상태 수명](08-sql-generation/chapter-06-full-retry-and-resume.md): 두 전체 시도·원요청 복원·삭제/보존·얕은 복사·캐시·재구성 한도·최종 SQL 대체·재개 키/세션 병합을 분석한다.
 54. [SQL 이벤트·부분 답변과 호출자 저장 경계](08-sql-generation/chapter-06-1-streaming-and-caller-boundaries.md): 시작/완료·상태 누적·실행 전 SQL 알림·중복 억제·재시도 기록·오류 반환·마지막 SQL 저장을 분석한다.
-55. SQL 검증 → chat → 관리 기능·외부 인터페이스·예측 순으로 분석한다.
+55. [SQL 구문·catalog 참조와 정적 검사](09-sql-validation/chapter-01-parse-and-static-validation.md): 이름·숫자 표현 보정, 전체 catalog parse·부분 참조·무의미 SQL·두 집계 검사와 상태·실패·테스트 경계를 분석한다.
+56. [모델 의도 검사·판정과 재구성 분기](09-sql-validation/chapter-02-intent-validation-and-routing.md): 질문·근거·사용 객체·JOIN 모드·구조화 응답 판정표·오류 허용·7회 재구성과 soft 상한을 분석한다.
+57. [선택적 SQL 값 검사·보정과 확인용 DB 조회](09-sql-validation/chapter-03-value-validation-and-probe.md): 조건 값 추출·22회 판단/20회 조회·캐시·증거/구조 검사·SQL/근거 갱신·실제 LIMIT/timeout·미확인 범위를 분석한다.
+58. [실행 전 합성 검사·직접 보정과 상태 병합](09-sql-validation/chapter-04-combined-precheck-and-state.md): 활성화·값/JOIN/JSONB 순서·오류 집계·직접 보정·검사별 횟수·조회/저장·예외·soft 분기를 분석한다. helper 내부 판정은 후속 상세 분석 대상이다.
+59. [저장 값·숫자 스케일·정수 나눗셈의 판정과 보정](09-sql-validation/chapter-04-1-literal-scale-and-division-checks.md): 조건 추출·소유 후보·고유값/존재/변형/범위 조회·예산/cache·문자열 후보·100배 제안·타입 추정·직접 보정·테스트 범위를 분석한다.
+60. [JOIN 경로·값 겹침·컬럼과 중간 테이블 보정](09-sql-validation/chapter-04-2-join-path-overlap-and-repair.md): ON/WHERE 추출·실제 DAL BFS·hub·0.2 겹침/None·컬럼 교체·bridge 삽입·case-dirty 집계·테스트 경계를 분석한다.
+61. [JSONB 키·컨테이너 조회와 중첩 경로 보정](09-sql-validation/chapter-04-3-jsonb-key-path-validation.md): 지원 구문·객체 키 probe·None/타입 fallback·키 잘림·형제 컨테이너·점 키 문자열 보정·상태와 테스트 경계를 분석한다.
+62. [SQL 재구성·오류 분류·추가 검색과 생성 불가 응답](09-sql-validation/chapter-05-sql-reconstruction-and-failure.md): 실행 보정 fast path·한 번의 분류·DB 범위 검색/병합·실패/해석 이력·메시지·수정 모델·검증 재진입·생성 불가/fallback 경계를 분석한다.
+63. [SQL 실행·오류 분류와 결과 계약](09-sql-validation/chapter-06-sql-execution-and-result-contract.md): 실행 SQL·connector·timeout·중복 label·JSON·숫자 metadata·보정 신호·인프라 오류와 상태 경계를 분석한다.
+64. [숫자 타입·정렬 보정과 interactive 제출](09-sql-validation/chapter-06-1-numeric-and-order-submission.md): 실제 caller·SQL tag/digest·최초/DEBUG 분기·후보 실행·SUM 값 비교·반환 SQL과 상태 차이를 분석한다.
+65. [빈 결과·NULL·LIKE 보정과 최종 반환](09-sql-validation/chapter-07-empty-result-repair-and-fallback.md): empty 표현·NULL alias·모델 분류·값 probe·별도 재시도·flag 수명·soft 상한·응답/fallback 경계를 분석한다.
+66. [Chat 요청·사용자 식별과 대화 준비](10-chat-runtime/chapter-01-request-identity-and-conversation.md): gateway 권한·신뢰 헤더·DB token·대상 DB·대화 소유권/저장·이력 상한·worker 인계와 실패 순서를 분석한다.
+67. [WarmPool·worker·queue와 실행 자원 수명](10-chat-runtime/chapter-02-worker-pool-and-queues.md): spawn/readiness·standby·ASK/event/error/done·작업별 문맥/설정·connector·재사용/교체·refresh/shutdown 경계를 분석한다.
+68. [Slot·SSE 재생·재접속과 취소](10-chat-runtime/chapter-03-slots-streaming-and-cancellation.md): claim/preempt·pump/buffer·heartbeat/DONE·watch·disconnect·cancel/release·웹 parser/Stop과 경합 경계를 분석한다.
+69. [대화·답변·결과·analytics 저장과 재조회](10-chat-runtime/chapter-04-conversation-results-and-analytics.md): 트랜잭션·부분 저장·SQL 선택·결과 형태·웹 이력/통계 조회를 분석한다.
+70. chat의 차트 → 관리 기능·외부 인터페이스·예측 순으로 이어간다. 09단계 예정 정적 분석은 완료했으며 실제 실행 검증은 각 장에 인계했다.
 
 설치·배포 안내는 제외한다. Snowflake·Trino·Kyuubi·HeavyDB 상세 분석은 사용자 요청으로 건너뛴다. 예정 Chapter 07~09는 제외하고 공통 실행 문서를 Chapter 10부터 이어간다. 각 기능은 파일·함수, 데이터 구조, 상태 변화, 실패·재시도, Mermaid와 관련 테스트까지 추적한다.
 
@@ -89,5 +104,18 @@
 - [SQL 생성 문맥·모델 출력 세부 계획](../../.codex/plan/auto-ontology/01-8-3_sql-prompt-and-output.md)
 - [대상 DB·방언·이름 계약 세부 계획](../../.codex/plan/auto-ontology/01-8-4_database-and-dialect.md)
 - [전체 재시도·재개·이벤트와 호출자 경계 세부 계획](../../.codex/plan/auto-ontology/01-8-5_full-retry-and-resume.md)
+- [SQL 검증·실행·보정 상세 계획](../../.codex/plan/auto-ontology/01-9_sql-validation.md)
+- [구문·정적·의도 검사 세부 계획](../../.codex/plan/auto-ontology/01-9-1_parse-static-and-intent.md)
+- [SQL 값 검사·확인용 DB 조회 세부 계획](../../.codex/plan/auto-ontology/01-9-2_value-validation-and-probe.md)
+- [실행 전 합성 검사·하위 판정 세부 계획](../../.codex/plan/auto-ontology/01-9-3_combined-prechecks.md)
+- [SQL 재구성·생성 불가 응답 세부 계획](../../.codex/plan/auto-ontology/01-9-4_sql-reconstruction.md)
+- [SQL 실행·숫자 결과와 제출 보정 세부 계획](../../.codex/plan/auto-ontology/01-9-5_sql-execution-and-numeric-output.md)
+- [빈 결과·NULL·LIKE 보정 세부 계획](../../.codex/plan/auto-ontology/01-9-6_empty-result-repair.md)
+- [Chat runtime 단계 계획](../../.codex/plan/auto-ontology/01-10_chat-runtime.md)
+- [Chat 요청·identity·대화 준비 세부 계획](../../.codex/plan/auto-ontology/01-10-1_request-identity-and-conversation.md)
+- [WarmPool·worker·queue 세부 계획](../../.codex/plan/auto-ontology/01-10-2_worker-pool-and-queues.md)
+- [Slot·SSE·재접속·취소 세부 계획](../../.codex/plan/auto-ontology/01-10-3_slots-streaming-and-cancellation.md)
 - 문서는 주제별 폴더에 chapter별로 작성하며, Mermaid 흐름도와 코드 근거를 포함한다.
 - 현재 문서는 정적 코드 분석 결과다. 실제 서비스 실행 결과와 구분한다.
+
+- [대화·결과·analytics 세부 계획](../../.codex/plan/auto-ontology/01-10-4_conversation-results-and-analytics.md)

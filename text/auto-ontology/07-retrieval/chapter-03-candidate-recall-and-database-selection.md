@@ -6,11 +6,22 @@
 
 ## 1. 용어와 입력 상태
 
-**Entity**는 검색할 ‘매출’, ‘고객 지역’ 같은 업무 문구다. **Subject**는 질문의 중심 대상 하나, **evidence**는 계산식·업무 정의 같은 보조 근거다. 생성 과정은 [Chapter 02](chapter-02-question-entities-and-search-scope.md)를 참고한다.
-
-**Hit**는 검색 후보 한 건이며 **label**은 객체 종류다. **ColumnAttribute**는 컬럼의 의미 속성, **SqlAttribute**는 이름 있는 SQL 정의, **CustomAnalysis**는 저장된 사용자 분석, **Term**은 업무 개념이다. **Recall(후보 수집)**은 관련 가능성이 있는 후보를 가져오는 단계이고, **backfill(보충 검색)**은 처음에 빠진 검색어를 선택한 DB 안에서 다시 조회하는 작업이다.
-
-**Future**는 병렬 작업의 결과를 나중에 받는 객체, **worker**는 해당 작업을 실행하는 스레드다. **Coverage**는 여기서 검색어가 후보를 하나라도 얻었는지 나타내는 값이며, 실제 질문의 답을 계산할 수 있다는 보장이 아니다. 전체 개념은 [용어집](../01-architecture/chapter-00-glossary.md)과 연결된다.
+| 용어 | 뜻·이 문서에서의 의미 |
+|---|---|
+| Entity | 검색할 ‘매출’, ‘고객 지역’ 같은 업무 문구다. |
+| Subject | 질문의 중심 대상 하나이다. |
+| evidence | 계산식·업무 정의 같은 보조 근거다. 생성 과정은 [Chapter 02](chapter-02-question-entities-and-search-scope.md)를 참고한다. |
+| Hit | 검색 후보 한 건이다. |
+| label | 객체 종류다. |
+| ColumnAttribute | 컬럼의 의미 속성이다. |
+| SqlAttribute | 이름 있는 SQL 정의이다. |
+| CustomAnalysis | 저장된 사용자 분석이다. |
+| Term | 업무 개념이다. |
+| Recall(후보 수집) | 관련 가능성이 있는 후보를 가져오는 단계이다. |
+| backfill(보충 검색) | 처음에 빠진 검색어를 선택한 DB 안에서 다시 조회하는 작업이다. |
+| Future | 병렬 작업의 결과를 나중에 받는 객체이다. |
+| worker | 해당 작업을 실행하는 스레드다. |
+| Coverage | 여기서 검색어가 후보를 하나라도 얻었는지 나타내는 값이며, 실제 질문의 답을 계산할 수 있다는 보장이 아니다. 전체 개념은 [용어집](../01-architecture/chapter-00-glossary.md)과 연결된다. |
 
 Agent는 다음 입력을 읽는다.
 

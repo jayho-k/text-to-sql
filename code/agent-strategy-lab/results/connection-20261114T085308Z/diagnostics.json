@@ -1,0 +1,76 @@
+{
+  "at": "2026-11-14T08:53:07.615208+00:00",
+  "host": "jayho-macmini.tail60408a.ts.net",
+  "proxy_hosts": {},
+  "dns": [
+    "100.92.122.28"
+  ],
+  "probes": [
+    {
+      "mode": "environment_proxy",
+      "path": "/api/version",
+      "status": 502,
+      "headers": {
+        "date": "Sat, 14 Nov 2026 08:53:13 GMT",
+        "content-length": "0"
+      },
+      "body": "",
+      "elapsed_s": 0.703
+    },
+    {
+      "mode": "environment_proxy",
+      "path": "/api/tags",
+      "status": 502,
+      "headers": {
+        "date": "Sat, 14 Nov 2026 08:53:13 GMT",
+        "content-length": "0"
+      },
+      "body": "",
+      "elapsed_s": 0.703
+    },
+    {
+      "mode": "environment_proxy",
+      "path": "/v1/models",
+      "status": 502,
+      "headers": {
+        "date": "Sat, 14 Nov 2026 08:53:13 GMT",
+        "content-length": "0"
+      },
+      "body": "",
+      "elapsed_s": 0.687
+    },
+    {
+      "mode": "direct",
+      "path": "/api/version",
+      "status": 502,
+      "headers": {
+        "date": "Sat, 14 Nov 2026 08:53:13 GMT",
+        "content-length": "0"
+      },
+      "body": "",
+      "elapsed_s": 0.703
+    },
+    {
+      "mode": "direct",
+      "path": "/api/tags",
+      "status": 502,
+      "headers": {
+        "date": "Sat, 14 Nov 2026 08:53:13 GMT",
+        "content-length": "0"
+      },
+      "body": "",
+      "elapsed_s": 0.703
+    },
+    {
+      "mode": "direct",
+      "path": "/v1/models",
+      "status": 502,
+      "headers": {
+        "date": "Sat, 14 Nov 2026 08:53:13 GMT",
+        "content-length": "0"
+      },
+      "body": "",
+      "elapsed_s": 0.687
+    }
+  ]
+}

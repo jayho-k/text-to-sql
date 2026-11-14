@@ -6,9 +6,13 @@ Auto-Ontology는 원본 DB의 외래 키 선언을 그대로 의미 계층의 �
 
 ## 1. 먼저 구분할 용어와 관계
 
-**FK(Foreign Key, 외래 키)**는 한 테이블의 컬럼 값이 다른 컬럼을 참조한다는 관계다. 예를 들어 `orders.customer_id → customers.id`는 주문의 고객 번호가 고객 테이블의 번호를 가리킨다는 뜻이다. **PK(Primary Key, 기본 키)**는 행을 식별하는 키다. 여기서 FK 후보를 찾는 쿼리가 참조 대상의 PK 여부까지 검사하는 것은 아니다.
-
-**Catalog**는 수집한 DB·스키마·테이블·컬럼 구조를 저장하는 목록이다. **Term**은 고객·주문 같은 업무 개념이며, **ColumnAttribute**는 고객 번호·고객 이름처럼 컬럼의 의미를 설명하는 속성 객체다. 더 넓은 용어는 [용어집](../01-architecture/chapter-00-glossary.md), 객체 구조는 [의미 계층 데이터 모델](../02-data-model/chapter-02-semantic-entities.md)을 참고한다.
+| 용어 | 뜻·이 문서에서의 의미 |
+|---|---|
+| FK(Foreign Key, 외래 키) | 한 테이블의 컬럼 값이 다른 컬럼을 참조한다는 관계다. 예를 들어 `orders.customer_id → customers.id`는 주문의 고객 번호가 고객 테이블의 번호를 가리킨다는 뜻이다. |
+| PK(Primary Key, 기본 키) | 행을 식별하는 키다. 여기서 FK 후보를 찾는 쿼리가 참조 대상의 PK 여부까지 검사하는 것은 아니다. |
+| Catalog | 수집한 DB·스키마·테이블·컬럼 구조를 저장하는 목록이다. |
+| Term | 고객·주문 같은 업무 개념이다. |
+| ColumnAttribute | 고객 번호·고객 이름처럼 컬럼의 의미를 설명하는 속성 객체다. 더 넓은 용어는 [용어집](../01-architecture/chapter-00-glossary.md), 객체 구조는 [의미 계층 데이터 모델](../02-data-model/chapter-02-semantic-entities.md)을 참고한다. |
 
 | 관계 | 저장 테이블과 양 끝 | 의미·생성 경계 |
 |---|---|---|

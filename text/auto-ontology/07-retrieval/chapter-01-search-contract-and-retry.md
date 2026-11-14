@@ -6,11 +6,20 @@
 
 ## 1. 용어와 검색 계층의 책임
 
-**Entity(검색 대상 개념)**는 이 함수에 넘기는 검색 문자열이다. 예를 들어 ‘매출’, ‘고객 지역’이 될 수 있지만, 이 함수 자체가 질문에서 그 단어를 추출하지는 않는다. **Label**은 `Table`, `ColumnAttribute`, `SqlAttribute`처럼 검색할 객체의 종류다.
-
-**Embedding(임베딩)**은 텍스트를 숫자 벡터로 바꾸는 작업, **VDB(Vector Database)**는 비슷한 벡터를 찾는 저장소, **Retriever**는 임베딩과 VDB 호출을 연결하는 검색기다. **Hit**는 검색 결과 한 건이고 **metadata**는 객체 ID·종류·DB 이름 등 그 결과에 붙은 정보다.
-
-**Top k**는 가까운 후보를 최대 k개 요청하는 값이다. **Distance(거리)**는 벡터 사이의 차이로 작을수록 가깝다. **Retry**는 실패한 호출 재시도, **backoff**는 재시도 전 기다리는 시간, **jitter**는 동시 재시도를 줄이기 위해 더하는 무작위 시간이다. 관련 개념은 [용어집](../01-architecture/chapter-00-glossary.md)을 참고한다.
+| 용어 | 뜻·이 문서에서의 의미 |
+|---|---|
+| Entity(검색 대상 개념) | 이 함수에 넘기는 검색 문자열이다. 예를 들어 ‘매출’, ‘고객 지역’이 될 수 있지만, 이 함수 자체가 질문에서 그 단어를 추출하지는 않는다. |
+| Label | `Table`, `ColumnAttribute`, `SqlAttribute`처럼 검색할 객체의 종류다. |
+| Embedding(임베딩) | 텍스트를 숫자 벡터로 바꾸는 작업이다. |
+| VDB(Vector Database) | 비슷한 벡터를 찾는 저장소이다. |
+| Retriever | 임베딩과 VDB 호출을 연결하는 검색기다. |
+| Hit | 검색 결과 한 건이다. |
+| metadata | 객체 ID·종류·DB 이름 등 그 결과에 붙은 정보다. |
+| Top k | 가까운 후보를 최대 k개 요청하는 값이다. |
+| Distance(거리) | 벡터 사이의 차이로 작을수록 가깝다. |
+| Retry | 실패한 호출 재시도이다. |
+| backoff | 재시도 전 기다리는 시간이다. |
+| jitter | 동시 재시도를 줄이기 위해 더하는 무작위 시간이다. 관련 개념은 [용어집](../01-architecture/chapter-00-glossary.md)을 참고한다. |
 
 ```mermaid
 sequenceDiagram

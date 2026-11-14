@@ -52,7 +52,7 @@ Execute는 evidence를 읽고 path_state의 바깥 사전을 복사한다. 질�
 | table·schema·column | 원래 테이블·스키마·컬럼명 |
 | qualified_table·physical | 인용한 테이블 참조·컬럼까지 붙인 전체 참조 |
 | table_description | 테이블 설명 |
-| column_description | description·usage_evidence·constraints·format의 비어 있지 않은 값을 ` | `로 연결 |
+| column_description | description·usage_evidence·constraints·format의 비어 있지 않은 값을 ` \| `로 연결 |
 
 Usage evidence는 사용 근거 설명, constraints는 제약, format은 값의 표기 규칙이다. 이름을 인용하는 helper는 SQLGlot이라는 SQL 표현 도구를 쓰고, 모르는 방언 등으로 실패하면 큰따옴표 방식으로 대체한다. 모든 DB에서 동일한 점 세 개 형식이라고 가정하지 않는다.
 

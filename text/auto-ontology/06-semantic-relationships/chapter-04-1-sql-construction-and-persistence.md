@@ -6,9 +6,18 @@
 
 ## 1. 용어와 입력·출력 계약
 
-**SqlAttribute(SQL 속성)**는 이름 붙여 재사용할 SQL 정의이고 **Term**은 그 속성이 속한 업무 개념이다. **Catalog**는 수집해 둔 테이블·컬럼 구조다. **Alias(별칭)**는 `orders o`의 `o`처럼 SQL에서 사용하는 다른 이름이다. **CTE(Common Table Expression)**는 WITH로 정의한 임시 이름의 조회 결과다. **Dialect(방언)**는 DB마다 다른 SQL 문법을 뜻한다.
-
-**정적 검증**은 원본 DB에서 SQL을 실행하지 않고 문법과 catalog 참조를 분석하는 것이다. **임베딩**은 검색용 숫자 벡터 생성, **VDB**는 벡터 저장소다. **Provenance(출처 연결)**는 어떤 원본에서 결과가 만들어졌는지 추적하는 관계다. 관련 용어는 [용어집](../01-architecture/chapter-00-glossary.md)과 연결된다.
+| 용어 | 뜻·이 문서에서의 의미 |
+|---|---|
+| SqlAttribute(SQL 속성) | 이름 붙여 재사용할 SQL 정의이다. |
+| Term | 그 속성이 속한 업무 개념이다. |
+| Catalog | 수집해 둔 테이블·컬럼 구조다. |
+| Alias(별칭) | `orders o`의 `o`처럼 SQL에서 사용하는 다른 이름이다. |
+| CTE(Common Table Expression) | WITH로 정의한 임시 이름의 조회 결과다. |
+| Dialect(방언) | DB마다 다른 SQL 문법을 뜻한다. |
+| 정적 검증 | 원본 DB에서 SQL을 실행하지 않고 문법과 catalog 참조를 분석하는 것이다. |
+| 임베딩 | 검색용 숫자 벡터 생성이다. |
+| VDB | 벡터 저장소다. |
+| Provenance(출처 연결) | 어떤 원본에서 결과가 만들어졌는지 추적하는 관계다. 관련 용어는 [용어집](../01-architecture/chapter-00-glossary.md)과 연결된다. |
 
 핵심 입력은 다음과 같다.
 

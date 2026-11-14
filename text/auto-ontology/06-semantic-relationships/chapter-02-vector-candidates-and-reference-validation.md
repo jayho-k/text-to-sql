@@ -6,13 +6,18 @@
 
 ## 1. 용어와 이번 단계의 책임
 
-- **FK(Foreign Key, 외래 키)**: 주문의 고객 번호가 고객 테이블의 번호를 참조하는 것과 같은 관계. 여기서 입력 컬럼은 아직 FK로 확정되지 않은 미연결 후보일 수도 있다.
-- **ColumnAttribute(컬럼 의미 속성)**: 컬럼이 나타내는 고객 번호·상품 코드 같은 의미 객체. 최종 반환값은 이 속성의 ID다.
-- **Embedding(임베딩)**: 문장을 숫자 벡터로 바꾸는 작업. **VDB(Vector Database, 벡터 저장소)**는 비슷한 벡터를 찾아 관련 문서를 반환한다.
-- **Retriever(검색기)**: 검색 문장을 임베딩한 뒤 VDB에 전달하는 객체. 반환 후보 한 건을 **hit**라고 부른다.
-- **Metadata(메타데이터)**: hit의 속성 ID·DB 이름·원본 테이블 등 검색 문서에 딸린 정보.
-- **LLM(Large Language Model, 대규모 언어 모델)**: 검색된 후보 중 참조 대상을 선택한다.
-- **Probe(탐색 조회)**: 실제 DB에 작은 확인용 SQL을 보내는 것. **Fallback(대체 경로)**은 앞 단계가 선택하지 못했을 때 사용하는 다음 절차다.
+| 용어 | 뜻·이 문서에서의 의미 |
+|---|---|
+| FK(Foreign Key, 외래 키) | 주문의 고객 번호가 고객 테이블의 번호를 참조하는 것과 같은 관계. 여기서 입력 컬럼은 아직 FK로 확정되지 않은 미연결 후보일 수도 있다. |
+| ColumnAttribute(컬럼 의미 속성) | 컬럼이 나타내는 고객 번호·상품 코드 같은 의미 객체. 최종 반환값은 이 속성의 ID다. |
+| Embedding(임베딩) | 문장을 숫자 벡터로 바꾸는 작업. |
+| VDB(Vector Database, 벡터 저장소) | 비슷한 벡터를 찾아 관련 문서를 반환한다. |
+| Retriever(검색기) | 검색 문장을 임베딩한 뒤 VDB에 전달하는 객체다. |
+| hit | 검색이 반환한 후보 한 건이다. |
+| Metadata(메타데이터) | hit의 속성 ID·DB 이름·원본 테이블 등 검색 문서에 딸린 정보. |
+| LLM(Large Language Model, 대규모 언어 모델) | 검색된 후보 중 참조 대상을 선택한다. |
+| Probe(탐색 조회) | 실제 DB에 작은 확인용 SQL을 보내는 것. |
+| Fallback(대체 경로) | 앞 단계가 선택하지 못했을 때 사용하는 다음 절차다. |
 
 업무 객체·관계의 전체 뜻은 [용어집](../01-architecture/chapter-00-glossary.md), 벡터 문서가 만들어지는 과정은 [의미 embedding](../05-semantic-compilation/chapter-05-semantic-embedding-and-failure-boundaries.md)과 연결된다.
 
@@ -148,7 +153,7 @@ flowchart LR
 | prompt 부분 | 실제 입력 |
 |---|---|
 | 출발 컬럼 | 이름·테이블 이름·설명·30자 이하 표본 문자열 |
-| 각 후보 | `column_id={metadata.id} | {hit.text의 앞 300자}` |
+| 각 후보 | `column_id={metadata.id} \| {hit.text의 앞 300자}` |
 | 지시 | 확신할 때만 주어진 ID 선택, 아니면 null, ID를 지어내지 말 것 |
 | 응답 | 필수 `selected_id: str 또는 None`, 선택적 `rationale` 문자열, 정의 외 필드 금지 |
 
